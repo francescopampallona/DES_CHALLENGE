@@ -9,12 +9,21 @@
 /**
  * Compilare con "g++ -Wall brute_force.cpp -lssl -lcrypto -o  bin/brute_force"
 */
+/**Potenza su numberi interi*/
+long long pown(short int base, short int esponente){
+    long long potenza=1;
+    for(int i = 0; i<esponente; i++){
+        potenza = potenza *base;
+    }
+    return potenza;
 
+}
 
 /*  COMBINAZIONI CON RIPETIZIONE IN 8 POSTI CON 28 ELEMENTI
     RITORNA LA COMBINAZIONE ALLA POSIZIONE N       */
 char* combo(char* charset, long long  N){
     char* combo = (char*) malloc(8*sizeof(char));
+    long long potenza;
     //Init
     for(int i=0;i<8;i++){
         combo[i] = charset[0];
@@ -22,10 +31,11 @@ char* combo(char* charset, long long  N){
     
     //Controllo valore
     for(int c=7; c>=0; c--){
-        if(N>=(long long)pow(28, c)){
-            int pos = N/(long long )pow(28, c);
+        potenza = pown(28,c);
+        if(N>=potenza){
+            int pos = N/potenza;
             combo[7-c]= charset[pos];
-            N = N - pos * (long long)pow(28,c);
+            N = N - pos * potenza;
             
         }
 
