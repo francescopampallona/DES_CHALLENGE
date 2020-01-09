@@ -6,6 +6,7 @@
 #include <string.h>
 #include <list>
 
+
 /**
  * Compilare con "g++ -Wall brute_force.cpp -lssl -lcrypto -o  bin/brute_force"
 */
@@ -21,32 +22,31 @@ long long pown(short int base, short int esponente){
 
 /*  COMBINAZIONI CON RIPETIZIONE IN 8 POSTI CON 28 ELEMENTI
     RITORNA LA COMBINAZIONE ALLA POSIZIONE N       */
-char* combo(char* charset, long long  N){
-    char* combo = (char*) malloc(8*sizeof(char));
+void combo(char* combo, char* charset, long long  N){
     long long potenza;
-    //Init
-    for(int i=0;i<8;i++){
-        combo[i] = charset[0];
-    }
+   
     
     //Controllo valore
     for(int c=7; c>=0; c--){
-        potenza = pown(28,c);
-        if(N>=potenza){
-            int pos = N/potenza;
-            combo[7-c]= charset[pos];
-            N = N - pos * potenza;
-            
+        if(N!=0){
+            potenza = pown(28,c);
+            if(N>=potenza){
+                int pos = N/potenza;
+                combo[7-c]= charset[pos];
+                N = N - pos * potenza;
+            }
+            else{
+                combo[7-c]= charset[0];
+            }
         }
-
-            
+        else{
+            combo[7-c]= charset[0];
+        }
     }
-    return combo;
 }
 
 /* DECRYPT DES */
-char* Decrypt(char* key,char*  cipher_text){
-    char* plain_text = (char*)malloc(8*sizeof(char));
+void Decrypt(char* plain_text,char* key,char*  cipher_text){
     DES_cblock key2;
     DES_key_schedule schedule;
     //Prepare the key
@@ -55,7 +55,7 @@ char* Decrypt(char* key,char*  cipher_text){
     DES_set_key_checked(&key2, &schedule);
     // Decrypt ECB
     DES_ecb_encrypt((unsigned char (*)[8]) cipher_text, (unsigned char (*)[8]) plain_text, &schedule, DES_DECRYPT);
-    return (plain_text);
+   
 
 }
 /** CHECK CHARACTERS
@@ -121,21 +121,31 @@ bool trova(std::list<char*> listaParole,char* plain_text){
 
     
 
-int main(){
+int main(int argc, char* argv[]){
     char charset[29] = {'a','b','d','f','h','j','l','n','p','r','t','v','x','z','A','B','D','F','H','J','L','N','P','R','T','V','X','Z', '\0'};
     char * cipher_text;
+    char* chiave_provata = (char*)malloc(8*sizeof(char));//SPAZIO ALLOCATO PER LE COMBINAZIONI
+    char* plain_text = (char*)malloc(8*sizeof(char));//SPAZIO PER IL PLAIN TEXT
+    //START SETTINGS
+    long long START;
+    if(argc==2){
+        START = atoll(argv[1]);
+    }
+    else{
+        START = 0;
+    }
+    //SHOW CHARSET
     printf("%s\n", charset);
+    //LOAD CIPHERTEXT
     cipher_text = (char*)malloc(8*sizeof(char));
-    //memcpy(cipher_text, "tJR\x14OC\xe2\xeb", 8); //Cipher text di prova
     memcpy(cipher_text, "v\x98\xb8s\xe3Hg\x13", 8); // Cipher_text della challenge
-
+    // LOAD LIST OF WORDS
     std::list <char* > listaParole;
     load(&listaParole);
-    //printf("%s \n", cipher_text);
     // TENTATIVI
-    for(long long tentativo = 2500000000; tentativo<=300000000000;tentativo++){
-        char* chiave_provata = combo(charset, tentativo);
-        char * plain_text = Decrypt(chiave_provata, cipher_text);
+    for(long long tentativo = START; tentativo<=300000000000;tentativo++){
+        combo(chiave_provata, charset, tentativo);
+        Decrypt(plain_text, chiave_provata, cipher_text);
         if(tentativo%100000000==0){ 
             printf("Tentativo: %lld  Chiave provata: %s Plain text: %s\n",tentativo ,chiave_provata, plain_text);
         }
@@ -148,8 +158,6 @@ int main(){
            
         }
 
-        free(chiave_provata);
-        free(plain_text);
     }
     return 0;
 }
