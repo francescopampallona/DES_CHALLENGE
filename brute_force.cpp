@@ -20,20 +20,22 @@ long long pown(short int base, short int esponente){
 
 }
 
-/*  COMBINAZIONI CON RIPETIZIONE IN 8 POSTI CON 28 ELEMENTI
-    RITORNA LA COMBINAZIONE ALLA POSIZIONE N       */
+/*  DISPOSIZIONI CON RIPETIZIONE IN 8 POSTI CON 28 ELEMENTI
+    RITORNA LA DISPOSIZIONE ALLA POSIZIONE N  
+    USATA PER IL CALCOLO DELLA DISPOSIZIONE INIZIALE     */
 void combo(char* combo, char* charset, long long  N){
     long long potenza;
-   
+    int pos;
     
-    //Controllo valore
+    //Calcolo della disposizione
     for(int c=7; c>=0; c--){
         if(N!=0){
             potenza = pown(28,c);
             if(N>=potenza){
-                int pos = N/potenza;
+                pos = N/potenza;
+                
                 combo[7-c]= charset[pos];
-                N = N - pos * potenza;
+                N = N % potenza;
             }
             else{
                 combo[7-c]= charset[0];
@@ -44,6 +46,7 @@ void combo(char* combo, char* charset, long long  N){
         }
     }
 }
+
 
 /* DECRYPT DES */
 void Decrypt(char* plain_text,char* key,char*  cipher_text){
@@ -116,13 +119,52 @@ bool trova(std::list<char*> listaParole,char* plain_text){
     }
      return trovata;
 }
-   
+/**
+ * RICERCA BINARIA
+ * ritorna la posizione dell' elemento trovato
+ */
+int RicercaBinaria(char key, char* charset, int len){
+    int start = 0;
+    int end = len  ;
+    int pos_mid= end /2;
+    while(true){
+        if(key ==charset[pos_mid]){
+            return pos_mid;
+        }
+        else if(key>charset[pos_mid]){
+            start= pos_mid;
+            pos_mid = (end + start)/2;
+        }
+        else if(key<charset[pos_mid]){
+            end = pos_mid;
+            pos_mid = (end+start)/2;
+        }
 
+    }
+
+
+}
+   
+/**
+ * Sale di un posto rispetto alla precedente disposizione
+ * ritorna una stringa che rappresenta la disposizione alla posizione successiva  
+ */
+
+void sali(char* chiave_provata, char* charset){
+    int pos;
+    for(int i=7; i>=0; i--){
+        pos = RicercaBinaria(chiave_provata[i],charset, 28);
+        pos =(pos +1) %28;
+        chiave_provata[i] = charset[pos];
+        if(pos != 0 ){ break;}
+        
+    }
+}
 
     
 
 int main(int argc, char* argv[]){
-    char charset[29] = {'a','b','d','f','h','j','l','n','p','r','t','v','x','z','A','B','D','F','H','J','L','N','P','R','T','V','X','Z', '\0'};
+    char charset[29] = {'A','B','D','F','H','J','L','N','P','R','T','V','X','Z','a','b','d','f','h','j','l','n','p','r','t','v','x','z', '\0'};
     char * cipher_text;
     char* chiave_provata = (char*)malloc(8*sizeof(char));//SPAZIO ALLOCATO PER LE COMBINAZIONI
     char* plain_text = (char*)malloc(8*sizeof(char));//SPAZIO PER IL PLAIN TEXT
@@ -134,6 +176,8 @@ int main(int argc, char* argv[]){
     else{
         START = 0;
     }
+    //DISPOSIZIONI INIZIALE DA CUI PARTIRE
+    combo(chiave_provata, charset, START);
     //SHOW CHARSET
     printf("%s\n", charset);
     //LOAD CIPHERTEXT
@@ -144,7 +188,6 @@ int main(int argc, char* argv[]){
     load(&listaParole);
     // TENTATIVI
     for(long long tentativo = START; tentativo<=300000000000;tentativo++){
-        combo(chiave_provata, charset, tentativo);
         Decrypt(plain_text, chiave_provata, cipher_text);
         if(tentativo%100000000==0){ 
             printf("Tentativo: %lld  Chiave provata: %s Plain text: %s\n",tentativo ,chiave_provata, plain_text);
@@ -157,6 +200,8 @@ int main(int argc, char* argv[]){
             }
            
         }
+        //RICALCOLO CHIAVE (chiave_provata = chiave_provata +1)
+        sali(chiave_provata, charset);
 
     }
     return 0;
